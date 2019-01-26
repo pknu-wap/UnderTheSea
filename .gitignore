@@ -5,6 +5,7 @@ logs/
 results/
 temp/
 test/
+csci_e89_project/images
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
