@@ -47,6 +47,19 @@ class FishDataset(utils.Dataset):
 
 		return count
 
+	#image setting 
+	def load_mask(image_id, detect_result):
+    	"""
+    	image_info = self.image_info[image_id]
+    	if image_info["source"] not in self.class_names:
+        	print("warning: source {} not part of our classes, delegating to parent.".format(image_info["source"]))
+        	return super(self.__class__, self).load_mask(image_id)
+    	"""
+    	mask = detect_result['masks']
+    	class_ids = detect_result['class_ids']
+
+    	return mask, class_ids
+
 
 
 def create_datasets(dataset_dir, config, train_pct=.8, randomize=True):
@@ -70,7 +83,7 @@ def create_datasets(dataset_dir, config, train_pct=.8, randomize=True):
 	del file_list[0]
 
 	# 파일 이름에서 .jpg, _ 지우기
-	file_names = FishDataset.clean_name(file_list)
+	file_names = FishDataset.clean_dataset(file_list)
 	
 	# 파일 이름에서 클래스 이름 가져오기 
 	class_names = FishDataset.get_unique_classnames(file_names)
