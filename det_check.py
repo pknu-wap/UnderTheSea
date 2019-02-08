@@ -1,5 +1,6 @@
 import os
 import csv
+from collections import Counter
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("../../")
