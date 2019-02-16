@@ -6,7 +6,9 @@ import skimage.draw
 import collections
 import re
 import random
-from collections import defaultdict
+import csv
+import math
+from collections import defaultdict, Counter
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("../../")
@@ -37,6 +39,7 @@ class DetConfig(Config):
         # Number of classes (including background)
         self.NUM_CLASSES = len(self.ALL_CLASS_NAMES)
         self.map_name_to_id = {}
+        self.class_info = [{"source": "", "id": 0, "name": "BG"}]
         Config.__init__(self)
 
     # A GPU with 12GB memory can fit two images.
@@ -71,6 +74,8 @@ class DetDataset(utils.Dataset):
         self.dataset_name = config.NAME
         self.map_name_to_id = {}
         self.actual_class_names = collections.Counter()
+        self.class_info = [{"source": "", "id": 0, "name": "BG"},
+                               {"source": "", "id": 1, "name": "fish"}]
         utils.Dataset.__init__(self)
 
     def load_by_annotations(self, dataset_dir, annotations_list, class_names):
@@ -90,10 +95,11 @@ class DetDataset(utils.Dataset):
         # Add classes. Use class_names to ensure consistency.
         for i, name in enumerate(class_names):
             # Skip over background if it appears in the class name list
+            print("class name:", name)
             index = i + 1
             if name != 'BG':
                 print('Adding class {:3}:{}'.format(index, name))
-                self.add_class(self.dataset_name, index, name)
+                self.add_class(self.dataset_name, index, name)   ## dataset_name, index, class_name
                 self.map_name_to_id[name] = index
 
         # Add images
@@ -126,6 +132,8 @@ class DetDataset(utils.Dataset):
                 width=width, height=height,
                 polygons=polygons,
                 r_object_name=r_object_name)
+                
+
 
     def load_dataset_images(self, dataset_dir, subset, class_names):
         """Load a subset of the dataset.
@@ -343,35 +351,189 @@ def annotation_stats(annotations):
 ## ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓  Mask RCNN을 한 번 돌려서 나온 mask를 가지고 다시 학습시킬 때 필요한 것들 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 ##########################################################################################################
 
-class DetDataset_from_result(utils.Dataset):
+class FishDataset(utils.Dataset):
     
     def __init__(self, config, result_masks):
         self.dataset_name = config.NAME
         self.map_name_to_id = {}
         self.actual_class_names = collections.Counter()
+        self.result_masks = result_masks
+        self.class_info = [{"source": "", "id": 0, "name": "BG"},
+                           {"source": "", "id": 0, "name": "fish"}]
         utils.Dataset.__init__(self)
     
-    
     ## Mask RCNN에서 나온 결과값을 load_mask 메소드에 파일 명과 함께 전달
-    def load_mask(self, image_id, result_masks):
+    def load_mask(self, image_id):
         image_info = self.image_info[image_id]
         if image_info["source"] not in self.class_names:
             print("warning: source {} not part of our classes, delegating to parent.".format(image_info["source"]))
             return super(self.__class__, self).load_mask(image_id)
-        
+    
         class_ids = []
-        for key in result_masks.keys():
-            if key == image_id:
-                for i in range(result_masks[key].shape[2]):
-                    class_ids.append(1)
+        if image_info['id'] in self.result_masks.keys():
+            for i in range(self.result_masks[image_info['id']].shape[2]):
+                class_ids.append(1)
         
         # Return mask, and array of class IDs of each instance. Since we have
         # one class ID only, we return an array of 1s
         class_ids = np.array(class_ids, dtype=np.int32)
-        return result_masks[key], class_ids
+        return self.result_masks[image_info['id']], class_ids
+
+    ## 데이터셋 형식에 맞춰 만들기
+    def make_add_image(self, image_path, file_list):
+        def get_class_name(file_name):
+            ## 파일명을 class ID로 사용하기 위해서 정규식으로 잘라냄
+            parse = re.sub('[0-9.]', '', file_name)
+            parse1 = re.sub('jpg$|jpeg$', '', parse)
+            parse2 = re.sub('_', ' ', count=1, string=parse1)
+            parse3 = re.sub('_', '', parse2)
+            return parse3
+            
+        for file_list_in_list in file_list:
+            for file_name in file_list_in_list:
+                img_path = os.path.join(image_path, file_name)
+                self.add_image(
+                           source = self.dataset_name,
+                           image_id = file_name,  # use file name as a unique image id , image_id는 사진 파일 이름
+                           path=img_path)
+                
+    def update_class_names(self, class_names):
+         # Add classes. Use class_names to ensure consistency.
+        for i, name in enumerate(class_names):
+        # Skip over background if it occurs in the
+            index = i + 1
+            if name != 'BG':
+                print('Adding class {:3}:{}'.format(index, name))
+                self.add_class(self.dataset_name, index, name)
+                self.map_name_to_id[name] = index
 
 
-def create_datasets_from_result(dataset_dir, config, train_pct=.8):
+
+def create_datasets_from_result(dataset_dir, config, result_masks, train_pct=.8):
+    
+    ## get file names from directory
+    file_list = get_file_name(dataset_dir)
+    ## Make Train list, Validation list
+    train_list, val_list = divide_dataset(dataset_dir, file_list)
+
+    print('Train list : ', train_list, '\n')
+    print('Validation list : ', val_list, '\n')
+
+    train_ds = FishDataset(config, result_masks)
+    train_ds.update_class_names(config.CLASS_NAMES)
+    train_ds.make_add_image(dataset_dir, train_list)
+    
+    
+    val_ds = FishDataset(config, result_masks)
+    val_ds.update_class_names(config.CLASS_NAMES)
+    val_ds.make_add_image(dataset_dir, val_list)
+    
+    
+    train_len = 0
+    val_len = 0
+    for i in train_list:
+        train_len += len(i)
+
+    print('train_len : ',train_len)
+
+    for i in val_list:
+        val_len += len(i)
+    print('val_len : ',val_len)
+    
+    assert len(train_ds.image_info) == train_len and len(val_ds.image_info) == val_len
+    
+    return train_ds, val_ds
+
+
+def get_unique_classnames(file_names):
+    """
+        1. 파일 이름 읽어옴
+        2. class_names 안에 이름 없으면 추가
+        """
+    class_names = list()
+    for i in file_names:
+        if i not in class_names:
+            class_names.append(i)
+        
+        return class_names
+
+
+def count_each_class(file_list):
+    count = Counter()
+    for i in file_list:
+        parse = re.sub('[0-9.]', '', i)
+        parse1 = re.sub('jpg$|jpeg$', '', parse)
+        parse2 = re.sub('_', ' ', count=1, string=parse1)
+        parse3 = re.sub('_', '', parse2)
+        count[parse3] += 1
+        
+    return count
+    
+
+def get_class_name(file_list):
+    class_ids = set()
+    for key in file_list:
+        ## 파일명을 class ID로 사용하기 위해서 정규식으로 잘라냄
+        parse = re.sub('[0-9.]', '', key)
+        parse1 = re.sub('jpg$|jpeg$', '', parse)
+        parse2 = re.sub('_', ' ', count=1, string=parse1)
+        parse3 = re.sub('_', '', parse2)
+        class_ids.add(parse3)
+    
+    return list(class_ids)
+
+
+def random_choice(count, train_n):
+    """
+        INPUT
+        count = class별 개수
+        train_n = train나눌 개수
+        OUTPUT
+        choice = 선택된 index
+        
+        train_n 수만큼 count 개수 내 랜덤한 숫자 만들기
+        """
+
+    np.random.seed(12978)
+    num_list = np.arange(count)+1
+    choice = np.random.choice(num_list, train_n, replace=False)
+    choice = list(choice)
+    choice.sort()
+    
+    return choice
+
+
+def generate_val_index(count, train_index):
+    ## count는 클래스의 총 갯수
+    total = set(np.arange(count)+1)
+    print(train_index)
+    train = set(train_index)
+    val_index = total-train
+    print(val_index)
+        
+    return list(val_index)
+
+
+def generate_filename(class_names, index):
+    full_names = []
+    for i in range(len(index)):
+        name = class_names.replace(" ", "_")
+        name = "%s_%d.jpg"%(name, index[i])
+        full_names.append(name)
+    
+    return full_names
+
+
+def get_file_name(dataset_dir):
+    # 1. dataset_dir 에서 파일 이름읽어오기
+    file_list = os.listdir(dataset_dir)
+    file_list_jpg = [file for file in file_list if file.endswith(".jpg")]
+    
+    return file_list_jpg
+
+    
+def divide_dataset(dataset_dir, file_list, train_pct = 0.8):
+    
     """
         dataset_dir 받아서 train/val 파일 이름 나눠주기
         
@@ -386,109 +548,51 @@ def create_datasets_from_result(dataset_dir, config, train_pct=.8):
         
         return train, val
         """
-    # 1. dataset_dir 에서 파일 이름읽어오기
-    file_list = os.listdir(dataset_dir)
-    file_list.sort()
-    del file_list[0]
     
-    # 파일 이름에서 .jpg, _ 지우기
-    file_names = FishDataset.clean_dataset(file_list)
-    
-    # 파일 이름에서 클래스 이름 가져오기
-    class_names = FishDataset.get_unique_classnames(file_names)
-    
+    # 1. 파일 이름에서 class id 만들기
+    class_names = get_class_name(file_list)
+
     # 2. class별 개수 세기
-    count = count_each_class(file_names, class_names)
-    
-    # csv 파일 만들어 놓기
-    save_path = os.path.join(ROOT_DIR, "/species.csv")
-    f = open(save_path, 'w', encoding='utf-8', newline='')
-    writer = csv.writer(f)
-    writer.writerows(zip(class_names, count))
-    f.close()
-    
+    count = count_each_class(file_list)
+    class_list = list(count.keys())
+    class_list.sort()
+
     # 3. class별 할당 train 개수 세기
-    train_n = list()
-    
-    for i in range(len(count)):
+    train_n = []
+
+    for i in class_list:
         if(count[i] <5):
             n = math.floor(count[i]*train_pct)
             train_n.append(n)
         else:
             n = math.ceil(count[i]*train_pct)
             train_n.append(n)
-        print(train_n)
-                            
+
     # 4. class 이동하면서 random 숫자 생성
-    train_index = list()
-                            
-    for i in range(len(count)):
-        choice = random_choice(count[i], train_n[i])
+    train_index = []
+    val_index = []
+
+    for i, key in enumerate(class_list):
+        choice = random_choice(count[key], train_n[i])
         train_index.append(choice)
-                                    
-        val_index = generate_val_index(count, train_index)
+        val_choice = generate_val_index(count[key], choice)
+        val_index.append(val_choice)
+
 
     # 5. class 이름에서 파일 이름 생성
-    train_set = list()
-    val_set = list()
-    for i in range(len(class_names)):
+    train_set = []
+    val_set = []
+    class_names.sort()
+    for i in range(len(train_index)):
         file_set = generate_filename(class_names[i], train_index[i])
         train_set.append(file_set)
         file_set = generate_filename(class_names[i], val_index[i])
         val_set.append(file_set)
-                
+
     # 6. train/ val 에 저장하기
     return train_set, val_set
 
-
-def random_choice(count, train_n):
-    """
-        INPUT
-        count = class별 개수
-        train_n = train나눌 개수
-        OUTPUT
-        choice = 선택된 index
-        
-        train_n 수만큼 count 개수 내 랜덤한 숫자 만들기
-        """
-    choice = list()
-    
-    for i in range(train_n):
-        number = random.randrange(1, count+1)
-        
-        while number in choice:
-            number = random.randrange(1, count+1)
-        
-        choice.append(number)
-
-
-    choice.sort()
-    
-    return choice
-
-
-def generate_val_index(count, train_index):
-    val_index = list()
-    
-    for i in range(len(count)):
-    no_choice = list()
-    for j in range(1, count[i]+1):
-        if j not in train_index[i]:
-            no_choice.append(j)
-        val_index.append(no_choice)
-                
-        return val_index
-
-
-def generate_filename(class_names, index):
-    full_names = list()
-
-    for i in range(len(index)):
-        name = class_names.replace(" ", "_")
-        name = "%s_%d.jpg"%(name, index[i])
-        full_names.append(name)
-            
-    return full_names
+                            
 
 
 
