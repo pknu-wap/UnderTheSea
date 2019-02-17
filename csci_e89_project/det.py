@@ -371,7 +371,7 @@ class FishDataset(utils.Dataset):
         class_ids = []
         if image_info['id'] in self.result_masks.keys():
             class_name = get_class_name(image_info['id'])
-            if class_name == self.class_info['name']
+            if class_name == self.class_info['name']:
                 class_ids.append(self.class_info['id'])
         
         # Return mask, and array of class IDs of each instance.
