@@ -367,7 +367,9 @@ class FishDataset(utils.Dataset):
         if image_info["source"] != 'fish':
             print("warning: source {} not part of our classes, delegating to parent.".format(image_info["source"]))
             return super(self.__class__, self).load_mask(image_id)
-    
+        
+        
+        ## find class id of input image
         class_ids = []
         if image_info['id'] in self.result_masks.keys():
             class_name = self.get_class_name(image_info['id'])
@@ -426,22 +428,20 @@ def create_datasets_from_result(dataset_dir, config, result_masks, train_pct=.8)
     train_ds.update_class_names(config.CLASS_NAMES)
     train_ds.make_add_image(dataset_dir, train_list)
     
-    
     val_ds = FishDataset(config, result_masks)
     val_ds.update_class_names(config.CLASS_NAMES)
     val_ds.make_add_image(dataset_dir, val_list)
-    
     
     train_len = 0
     val_len = 0
     for i in train_list:
         train_len += len(i)
 
-    print('train_len : ',train_len)
-
     for i in val_list:
         val_len += len(i)
-    print('val_len : ',val_len)
+
+    print('Numbers of train images : ',train_len)
+    print('Numbers of validation images : ',val_len)
     
     assert len(train_ds.image_info) == train_len and len(val_ds.image_info) == val_len
     
@@ -578,7 +578,6 @@ def divide_dataset(dataset_dir, file_list, train_pct = 0.8):
         val_choice = generate_val_index(count[key], choice)
         val_index.append(val_choice)
 
-
     # 5. class 이름에서 파일 이름 생성
     train_set = []
     val_set = []
@@ -592,16 +591,9 @@ def divide_dataset(dataset_dir, file_list, train_pct = 0.8):
     # 6. train/ val 에 저장하기
     return train_set, val_set
 
-                            
-
-
-
-
 ##########################################################################################################
 ## ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑   Mask RCNN을 한 번 돌려서 나온 mask를 가지고 다시 학습시킬 때 필요한 것들 ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 ##########################################################################################################
-
-
 
 if __name__ == "__main__" :
     config = DetConfig('Fish', ['Fish'])
