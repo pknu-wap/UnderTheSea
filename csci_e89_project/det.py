@@ -358,37 +358,39 @@ class FishDataset(utils.Dataset):
         self.map_name_to_id = {}
         self.actual_class_names = collections.Counter()
         self.result_masks = result_masks
-        self.class_info = [{"source": "", "id": 0, "name": "BG"},
-                           {"source": "", "id": 0, "name": "fish"}]
+        self.class_info = [{"source": "", "id": 0, "name": "BG"}]
         utils.Dataset.__init__(self)
     
     ## Mask RCNN에서 나온 결과값을 load_mask 메소드에 파일 명과 함께 전달
     def load_mask(self, image_id):
         image_info = self.image_info[image_id]
-        if image_info["source"] not in self.class_names:
+        if image_info["source"] != 'fish':
             print("warning: source {} not part of our classes, delegating to parent.".format(image_info["source"]))
             return super(self.__class__, self).load_mask(image_id)
     
         class_ids = []
         if image_info['id'] in self.result_masks.keys():
-            for i in range(self.result_masks[image_info['id']].shape[2]):
-                class_ids.append(1)
+            class_name = get_class_name(image_info['id'])
+            if class_name == self.class_info['name']
+                class_id.append(self.class_info['id'])
         
-        # Return mask, and array of class IDs of each instance. Since we have
-        # one class ID only, we return an array of 1s
+        # Return mask, and array of class IDs of each instance.
+        # 마스크를 돌려줄 때, 각 인스턴스의 클래스 아이디 번호를 어래이로 넘겨줘야한다.
         class_ids = np.array(class_ids, dtype=np.int32)
         return self.result_masks[image_info['id']], class_ids
-
+                
+    ## 파일 이름에서 클래스 id 추출
+    def get_class_name(self, file_name):
+        ## 파일명을 class ID로 사용하기 위해서 정규식으로 잘라냄
+        parse = re.sub('[0-9.]', '', file_name)
+        parse1 = re.sub('jpg$|jpeg$', '', parse)
+        parse2 = re.sub('_', ' ', count=1, string=parse1)
+        parse3 = re.sub('_', '', parse2)
+        return parse3
+    
     ## 데이터셋 형식에 맞춰 만들기
     def make_add_image(self, image_path, file_list):
-        def get_class_name(file_name):
-            ## 파일명을 class ID로 사용하기 위해서 정규식으로 잘라냄
-            parse = re.sub('[0-9.]', '', file_name)
-            parse1 = re.sub('jpg$|jpeg$', '', parse)
-            parse2 = re.sub('_', ' ', count=1, string=parse1)
-            parse3 = re.sub('_', '', parse2)
-            return parse3
-            
+
         for file_list_in_list in file_list:
             for file_name in file_list_in_list:
                 img_path = os.path.join(image_path, file_name)
@@ -493,8 +495,7 @@ def random_choice(count, train_n):
         
         train_n 수만큼 count 개수 내 랜덤한 숫자 만들기
         """
-
-    np.random.seed(12978)
+    
     num_list = np.arange(count)+1
     choice = np.random.choice(num_list, train_n, replace=False)
     choice = list(choice)
@@ -506,10 +507,8 @@ def random_choice(count, train_n):
 def generate_val_index(count, train_index):
     ## count는 클래스의 총 갯수
     total = set(np.arange(count)+1)
-    print(train_index)
     train = set(train_index)
     val_index = total-train
-    print(val_index)
         
     return list(val_index)
 
