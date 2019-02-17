@@ -371,11 +371,12 @@ class FishDataset(utils.Dataset):
         class_ids = []
         if image_info['id'] in self.result_masks.keys():
             class_name = get_class_name(image_info['id'])
-            if class_name == self.class_info['name']:
-                class_ids.append(self.class_info['id'])
+            for class_info in self.class_info:
+                if class_name == self.class_info['name']:
+                    class_ids.append(self.class_info['id'])
         
         # Return mask, and array of class IDs of each instance.
-        # 마스크를 돌려줄 때, 각 인스턴스의 클래스 아이디 번호를 어래이로 넘겨줘야한다.
+        # 마스크를 돌려줄 때, 각 인스턴스의 클래스 아이디 번호를 넘파이 배열로 넘겨줘야한다.
         class_ids = np.array(class_ids, dtype=np.int32)
         return self.result_masks[image_info['id']], class_ids
                 
