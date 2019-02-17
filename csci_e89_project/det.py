@@ -372,7 +372,7 @@ class FishDataset(utils.Dataset):
         if image_info['id'] in self.result_masks.keys():
             class_name = get_class_name(image_info['id'])
             if class_name == self.class_info['name']
-                class_id.append(self.class_info['id'])
+                class_ids.append(self.class_info['id'])
         
         # Return mask, and array of class IDs of each instance.
         # 마스크를 돌려줄 때, 각 인스턴스의 클래스 아이디 번호를 어래이로 넘겨줘야한다.
