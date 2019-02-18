@@ -484,63 +484,12 @@ def get_class_name(file_list):
     return list(class_ids)
 
 
-def random_choice(count, train_n):
-    """
-        INPUT
-        count = class별 개수
-        train_n = train나눌 개수
-        OUTPUT
-        choice = 선택된 index
-        
-        train_n 수만큼 count 개수 내 랜덤한 숫자 만들기
-        """
-    
-    num_list = np.arange(count)+1
-    choice = np.random.choice(num_list, train_n, replace=False)
-    choice = list(choice)
-    choice.sort()
-    
-    return choice
-
-
-def generate_val_index(count, train_index):
-    ## count는 클래스의 총 갯수
-    total = set(np.arange(count)+1)
-    train = set(train_index)
-    val_index = total-train
-        
-    return list(val_index)
-
-
-def generate_filename(class_names, index):
-    full_names = []
-    for i in range(len(index)):
-        name = class_names.replace(" ", "_")
-        name = "%s_%d.jpg"%(name, index[i])
-        full_names.append(name)
-    
-    return full_names
-
-
 def get_file_name(dataset_dir):
     # 1. dataset_dir 에서 파일 이름읽어오기
     file_list = os.listdir(dataset_dir)
     file_list_jpg = [file for file in file_list if file.endswith(".jpg")]
     
     return file_list_jpg
-
-
-def count_train_data(class_list):
-    train_n = []
-    
-    for i in class_list:
-        if(count[i] <5):
-            n = math.floor(count[i]*train_pct)
-            train_n.append(n)
-        else:
-            n = math.ceil(count[i]*train_pct)
-            train_n.append(n)
-    return train_n
 
 
 def divide_dataset(dataset_dir, train_pct):
