@@ -416,10 +416,8 @@ class FishDataset(utils.Dataset):
 
 def create_datasets_from_result(dataset_dir, config, result_masks, train_pct=.8):
     
-    ## get file names from directory
-    file_list = get_file_name(dataset_dir)
     ## Make Train list, Validation list
-    train_list, val_list = divide_dataset(dataset_dir, file_list)
+    train_list, val_list = divide_dataset(dataset_dir, train_pct)
 
     print('Train list : ', train_list, '\n')
     print('Validation list : ', val_list, '\n')
@@ -531,10 +529,24 @@ def get_file_name(dataset_dir):
     
     return file_list_jpg
 
+
+def count_train_data(class_list):
+    train_n = []
     
-def divide_dataset(dataset_dir, file_list, train_pct = 0.8):
+    for i in class_list:
+        if(count[i] <5):
+            n = math.floor(count[i]*train_pct)
+            train_n.append(n)
+        else:
+            n = math.ceil(count[i]*train_pct)
+            train_n.append(n)
+    return train_n
+
+
+def divide_dataset(dataset_dir, train_pct):
     
     """
+        docstring 수정
         dataset_dir 받아서 train/val 파일 이름 나눠주기
         
         file_list / file_names / class_names / count / train_n / train_index
@@ -549,47 +561,34 @@ def divide_dataset(dataset_dir, file_list, train_pct = 0.8):
         return train, val
         """
     
-    # 1. 파일 이름에서 class id 만들기
+    # 1. get file names from dataset directory
+    file_list = get_file_name(dataset_dir)
+    
+    # 2. 파일 이름에서 class id 만들기
     class_names = get_class_name(file_list)
 
-    # 2. class별 개수 세기
-    count = count_each_class(file_list)
-    class_list = list(count.keys())
-    class_list.sort()
+    # 3. train, val 비율대로 나눠 주기
+    each_class_file_list = []
+    train_list = []
+    val_list = []
+    for class_name in class_names:
+        split_class_name = class_name.split()
+        for file_name in file_list:
+            if len(split_class_name) == 1:
+                if split_class_name == file_name.split('_')[0]:
+                    each_class_file_list.append(file_name)
+            elif split_class_name == file_name.split('_')[:2]:
+                each_class_file_list.append(file_name)
+    
+        random.shuffle(each_class_file_list)
+        n = math.floor(len(each_class_file_list)*train_pct)
+        train_list.append(each_class_file_list[:n])
+        val_list.append(each_class_file_list[n:])
+        each_class_file_list=[]
+    
+    return train_list, val_list
+        
 
-    # 3. class별 할당 train 개수 세기
-    train_n = []
-
-    for i in class_list:
-        if(count[i] <5):
-            n = math.floor(count[i]*train_pct)
-            train_n.append(n)
-        else:
-            n = math.ceil(count[i]*train_pct)
-            train_n.append(n)
-
-    # 4. class 이동하면서 random 숫자 생성
-    train_index = []
-    val_index = []
-
-    for i, key in enumerate(class_list):
-        choice = random_choice(count[key], train_n[i])
-        train_index.append(choice)
-        val_choice = generate_val_index(count[key], choice)
-        val_index.append(val_choice)
-
-    # 5. class 이름에서 파일 이름 생성
-    train_set = []
-    val_set = []
-    class_names.sort()
-    for i in range(len(train_index)):
-        file_set = generate_filename(class_names[i], train_index[i])
-        train_set.append(file_set)
-        file_set = generate_filename(class_names[i], val_index[i])
-        val_set.append(file_set)
-
-    # 6. train/ val 에 저장하기
-    return train_set, val_set
 
 ##########################################################################################################
 ## ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑   Mask RCNN을 한 번 돌려서 나온 mask를 가지고 다시 학습시킬 때 필요한 것들 ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
