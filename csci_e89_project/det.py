@@ -74,8 +74,6 @@ class DetDataset(utils.Dataset):
         self.dataset_name = config.NAME
         self.map_name_to_id = {}
         self.actual_class_names = collections.Counter()
-        self.class_info = [{"source": "", "id": 0, "name": "BG"},
-                               {"source": "", "id": 1, "name": "fish"}]
         utils.Dataset.__init__(self)
 
     def load_by_annotations(self, dataset_dir, annotations_list, class_names):
@@ -95,7 +93,6 @@ class DetDataset(utils.Dataset):
         # Add classes. Use class_names to ensure consistency.
         for i, name in enumerate(class_names):
             # Skip over background if it appears in the class name list
-            print("class name:", name)
             index = i + 1
             if name != 'BG':
                 print('Adding class {:3}:{}'.format(index, name))
@@ -351,6 +348,92 @@ def annotation_stats(annotations):
 ## ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓  Mask RCNN을 한 번 돌려서 나온 mask를 가지고 다시 학습시킬 때 필요한 것들 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 ##########################################################################################################
 
+## mask 값 불러와서 물고기 모양 인식 훈련시키기위한 클래스 
+class FishShapeDataset(utils.Dataset):
+    
+    def __init__(self, config, result_masks):
+        self.dataset_name = config.NAME
+        self.map_name_to_id = {}
+        self.actual_class_names = collections.Counter()
+        self.result_masks = result_masks
+        utils.Dataset.__init__(self)
+    
+    ## Mask RCNN에서 나온 결과값 + annotation찍은 마스크값을 load_mask 메소드에 파일 명과 함께 전달
+    def load_mask(self, image_id):
+        image_info = self.image_info[image_id]
+        if image_info["source"] != 'fish':
+            print("warning: source {} not part of our classes, delegating to parent.".format(image_info["source"]))
+            return super(self.__class__, self).load_mask(image_id)
+        
+        
+        ## find class id of input image
+        class_ids = []
+        for i in range(self.result_masks[image_info['id']].shape[-1]):
+            class_ids.append(1)
+
+        class_ids = np.array(class_ids, dtype=np.int32)
+        return self.result_masks[image_info['id']], class_ids
+    
+    ## 데이터셋 형식에 맞춰 만들기
+    def make_add_image(self, image_path, file_list):
+        for file_name in file_list:
+            img_path = os.path.join(image_path, file_name)
+            self.add_image(
+                        source = self.dataset_name,
+                        image_id = file_name,  # use file name as a unique image id , image_id는 사진 파일 이름
+                        path=img_path)
+                
+    def update_class_names(self, class_names):
+         # Add classes. Use class_names to ensure consistency.
+        for i, name in enumerate(class_names):
+        # Skip over background if it occurs in the
+            index = i + 1
+            if name != 'BG':
+                print('Adding class {:3}:{}'.format(index, name))
+                self.add_class(self.dataset_name, index, name)
+                self.map_name_to_id[name] = index
+
+
+def create_datasets_total(dataset_dir, config, result_masks, train_pct=.8):
+    
+    ## Make Train list, Validation list
+    train_list, val_list = divide_dataset_total(dataset_dir, train_pct)
+
+    train_ds = FishShapeDataset(config, result_masks)
+    train_ds.update_class_names(config.CLASS_NAMES)
+    train_ds.make_add_image(dataset_dir, train_list)
+    
+    val_ds = FishShapeDataset(config, result_masks)
+    val_ds.update_class_names(config.CLASS_NAMES)
+    val_ds.make_add_image(dataset_dir, val_list)
+    
+
+    print('Train list : ', train_list, '\n')
+    print('Validation list : ', val_list, '\n')
+    print('Numbers of train images : ',len(train_list))
+    print('Numbers of validation images : ',len(val_list))
+    
+    assert len(train_ds.image_info) == len(train_list) and len(val_ds.image_info) == len(val_list)
+    
+    return train_ds, val_ds
+
+
+def divide_dataset_total(dataset_dir, train_pct):
+    
+    # 1. get file names from dataset directory
+    file_list = get_file_name(dataset_dir)
+    
+    # 2. train, val 비율대로 나눠 주기
+    random.shuffle(file_list)
+    n = math.floor(len(file_list)*train_pct)
+    train_list = file_list[:n]
+    val_list = file_list[n:]
+    
+    return train_list, val_list
+
+###############################################################################
+
+
 class FishDataset(utils.Dataset):
     
     def __init__(self, config, result_masks):
@@ -358,7 +441,6 @@ class FishDataset(utils.Dataset):
         self.map_name_to_id = {}
         self.actual_class_names = collections.Counter()
         self.result_masks = result_masks
-        self.class_info = [{"source": "", "id": 0, "name": "BG"}]
         utils.Dataset.__init__(self)
     
     ## Mask RCNN에서 나온 결과값을 load_mask 메소드에 파일 명과 함께 전달
@@ -373,9 +455,10 @@ class FishDataset(utils.Dataset):
         class_ids = []
         if image_info['id'] in self.result_masks.keys():
             class_name = self.get_class_name(image_info['id'])
-            for class_info in self.class_info:
-                if class_name == class_info['name']:
-                    class_ids.append(class_info['id'])
+            for i in range(self.result_masks[image_info['id']].shape[-1]):
+                for j in range(len(self.class_info)):
+                    if class_name== self.class_info[j]['name']:
+                        class_ids.append(self.class_info[j]['id'])
         
         # Return mask, and array of class IDs of each instance.
         # 마스크를 돌려줄 때, 각 인스턴스의 클래스 아이디 번호를 넘파이 배열로 넘겨줘야한다.
@@ -419,9 +502,6 @@ def create_datasets_from_result(dataset_dir, config, result_masks, train_pct=.8)
     ## Make Train list, Validation list
     train_list, val_list = divide_dataset(dataset_dir, train_pct)
 
-    print('Train list : ', train_list, '\n')
-    print('Validation list : ', val_list, '\n')
-
     train_ds = FishDataset(config, result_masks)
     train_ds.update_class_names(config.CLASS_NAMES)
     train_ds.make_add_image(dataset_dir, train_list)
@@ -438,40 +518,18 @@ def create_datasets_from_result(dataset_dir, config, result_masks, train_pct=.8)
     for i in val_list:
         val_len += len(i)
 
+
+    print('Train list : ', train_list, '\n')
+    print('Validation list : ', val_list, '\n')
     print('Numbers of train images : ',train_len)
     print('Numbers of validation images : ',val_len)
     
     assert len(train_ds.image_info) == train_len and len(val_ds.image_info) == val_len
     
     return train_ds, val_ds
-
-
-def get_unique_classnames(file_names):
-    """
-        1. 파일 이름 읽어옴
-        2. class_names 안에 이름 없으면 추가
-        """
-    class_names = list()
-    for i in file_names:
-        if i not in class_names:
-            class_names.append(i)
-        
-        return class_names
-
-
-def count_each_class(file_list):
-    count = Counter()
-    for i in file_list:
-        parse = re.sub('[0-9.]', '', i)
-        parse1 = re.sub('jpg$|jpeg$', '', parse)
-        parse2 = re.sub('_', ' ', count=1, string=parse1)
-        parse3 = re.sub('_', '', parse2)
-        count[parse3] += 1
-        
-    return count
     
 
-def get_class_name(file_list):
+def get_class_name_list(file_list):
     class_ids = set()
     for key in file_list:
         ## 파일명을 class ID로 사용하기 위해서 정규식으로 잘라냄
@@ -494,27 +552,11 @@ def get_file_name(dataset_dir):
 
 def divide_dataset(dataset_dir, train_pct):
     
-    """
-        docstring 수정
-        dataset_dir 받아서 train/val 파일 이름 나눠주기
-        
-        file_list / file_names / class_names / count / train_n / train_index
-        
-        1. dataset_dir 에서 파일 이름 읽어오기
-        2. class별 개수 세기
-        3. class별 할당 train 개수 세기
-        4. class 이동하면서 random 숫자 생성
-        5. class 이름에서 파일 이름 생성
-        6. train/ val 에 저장하기
-        
-        return train, val
-        """
-    
     # 1. get file names from dataset directory
     file_list = get_file_name(dataset_dir)
     
     # 2. 파일 이름에서 class id 만들기
-    class_names = get_class_name(file_list)
+    class_names = get_class_name_list(file_list)
 
     # 3. train, val 비율대로 나눠 주기
     each_class_file_list = []
@@ -528,7 +570,7 @@ def divide_dataset(dataset_dir, train_pct):
                     each_class_file_list.append(file_name)
             elif split_class_name == file_name.split('_')[:2]:
                 each_class_file_list.append(file_name)
-    
+
         random.shuffle(each_class_file_list)
         n = math.floor(len(each_class_file_list)*train_pct)
         train_list.append(each_class_file_list[:n])
