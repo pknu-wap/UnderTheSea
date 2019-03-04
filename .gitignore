@@ -5,7 +5,10 @@ logs/
 results/
 temp/
 test/
-csci_e89_project/images
+fish_project/images
+fish_project/one_class_instance_seg.ipynb
+fish_project/result_masks
+fish_project/result_masks_1.dms
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
