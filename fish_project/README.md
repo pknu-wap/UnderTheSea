@@ -70,7 +70,7 @@ The key attributes are:
 
 
 ## Fish Detection Instance Segmentation
-Following was based on ![samples/ballons/inspect_balloon_model.ipynb]( https://github.com/matterport/Mask_RCNN/blob/master/samples/balloon/inspect_balloon_model.ipynb)
+Following was based on [samples/ballons/inspect_balloon_model.ipynb]( https://github.com/matterport/Mask_RCNN/blob/master/samples/balloon/inspect_balloon_model.ipynb)
 
 Some differences with the ballon example are:
 1. Rather then having separate directories for traning and validation, a single directory containing all images and annoatations is used. Scripts found in det.py will create separate training and validation training set objects. The default split is 80/20 respectively.
