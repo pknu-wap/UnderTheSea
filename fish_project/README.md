@@ -1,9 +1,9 @@
 
 ## Overview
 
-This project is for Fish detection and classification using Mask R-CNN. ![matterport/Mask_RCNN](https://github.com/matterport/Mask_RCNN) was choosen since it used Keras/Tensorflow, well written, pulled togehter various network architectures (Faster R-CNN, FPN, Mask R-CNN), and is well writtent and documented and annotation method of ![sabderra/Mask_RCNN](https://github.com/sabderra/Mask_RCNN) was choosen.
+This project is for Fish detection and classification using Mask R-CNN. [matterport/Mask_RCNN](https://github.com/matterport/Mask_RCNN) was choosen since it used Keras/Tensorflow, well written, pulled togehter various network architectures (Faster R-CNN, FPN, Mask R-CNN), and is well writtent and documented and annotation method of [sabderra/Mask_RCNN](https://github.com/sabderra/Mask_RCNN) was choosen.
 
-This project used data from my own photos as well as ![QUT Fish Dataset](https://wiki.qut.edu.au/display/cyphy/Fish+Dataset)  to train and test. The data was annotated using VGG Iamge Annotator.
+This project used data from my own photos as well as [QUT Fish Dataset](https://wiki.qut.edu.au/display/cyphy/Fish+Dataset)  to train and test. The data was annotated using VGG Iamge Annotator.
 
 Fish detection is concerned with identifying a single object in an image. Classification along with localization identifies a sign object and also places a bounding box around it. The goal of object detection is classify multiple objects and localize each using bounding boxes. Instance segmentation looks to classify multiple objects and their pixels. The below images help to illustrate the distinction. 
 
@@ -75,7 +75,7 @@ Following was based on ![samples/ballons/inspect_balloon_model.ipynb]( https://g
 Some differences with the ballon example are:
 1. Rather then having separate directories for traning and validation, a single directory containing all images and annoatations is used. Scripts found in det.py will create separate training and validation training set objects. The default split is 80/20 respectively.
 
-Dataset uses QUT Fish dataset downloaded through QUT website. The images came in a variety of sizes and quality. 
+QUT Fish dataset downloaded through QUT website. The images came in a variety of sizes and quality. 
 The batch consistent of variety of wolf species. 
 * Out of 4462 images only 256 images were annotated.
 * Using above result, we detected whole fish shape mask. Then, re-trained using whole photos to find fish shape. 
@@ -89,9 +89,11 @@ Sample results are:
 
 
 ## Make Video using Fish Detection Instance Segmentation
-Following was based on ![How to run Object Detection and Segmentation on a Video Fast for Free](https://www.dlology.com/blog/how-to-run-object-detection-and-segmentation-on-video-fast-for-free/) and ![markjay4k/Mask-RCNN-series](https://github.com/markjay4k/Mask-RCNN-series). It is NOT realtime detection.
+Following was based on [How to run Object Detection and Segmentation on a Video Fast for Free](https://www.dlology.com/blog/how-to-run-object-detection-and-segmentation-on-video-fast-for-free/) and [markjay4k/Mask-RCNN-series](https://github.com/markjay4k/Mask-RCNN-series). It is NOT realtime detection.
 
 Sample results are:
+
+
 ![Fish detection video sample](assets/result2.gif)
 
 
