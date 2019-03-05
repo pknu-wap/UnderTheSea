@@ -69,6 +69,7 @@ The key attributes are:
 
 
 
+
 ## Fish Detection Instance Segmentation
 Following was based on [samples/ballons/inspect_balloon_model.ipynb]( https://github.com/matterport/Mask_RCNN/blob/master/samples/balloon/inspect_balloon_model.ipynb)
 
@@ -88,6 +89,8 @@ Sample results are:
 ![Fish detection Instance Segmentation Sample](assets/fish_detection_4.png)
 
 
+
+
 ## Make Video using Fish Detection Instance Segmentation
 Following was based on [How to run Object Detection and Segmentation on a Video Fast for Free](https://www.dlology.com/blog/how-to-run-object-detection-and-segmentation-on-video-fast-for-free/) and [markjay4k/Mask-RCNN-series](https://github.com/markjay4k/Mask-RCNN-series). It is NOT realtime detection.
 
@@ -101,7 +104,7 @@ Sample results are:
 ## Fish Classification Instance Segmentation
 Fish classification used photos of only 5 species. This is because, in QUT Fish dataset, there are few photos per spieces. To classify more species, you need much more photos of each species. det.py is used for configuration creating the datasets.
 
-** Fish classification is still working. We are gathering more fish photos now. :p
+* Fish classification is still working. We are gathering more fish photos now. :p
 
 Sample results are:
 ![Fish classification Instance Segmentation Sample](assets/fish_classification_1.png)
