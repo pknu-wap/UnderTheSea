@@ -304,10 +304,7 @@ class Dataset(object):
         # Build (or rebuild) everything else from the info dicts.
         self.num_classes = len(self.class_info)
         self.class_ids = np.arange(self.num_classes)
-<<<<<<< HEAD
-=======
         ## 클래스의 갯수만큼 원소를 하나씩 늘려가며 넘파이 어레이 생성, 5개면, [0,1,2,3,4]
->>>>>>> jaeung
         self.class_names = [clean_name(c["name"]) for c in self.class_info]
         self.num_images = len(self.image_info)
         self._image_ids = np.arange(self.num_images)

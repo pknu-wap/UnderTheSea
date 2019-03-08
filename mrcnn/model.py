@@ -770,12 +770,8 @@ def refine_detections_graph(rois, probs, deltas, window, config):
     # Coordinates are normalized.
     detections = tf.concat([
         tf.gather(refined_rois, keep),
-<<<<<<< HEAD
-        tf.to_float(tf.gather(class_ids, keep))[..., tf.newaxis],
-=======
         #tf.to_float(tf.gather(class_ids, keep))[..., tf.newaxis],
         tf.cast(tf.gather(class_ids, keep), tf.float32)[..., tf.newaxis],
->>>>>>> jaeung
         tf.gather(class_scores, keep)[..., tf.newaxis]
         ], axis=1)
 
@@ -2344,11 +2340,7 @@ class MaskRCNN():
         # Callbacks
         callbacks = [
             keras.callbacks.TensorBoard(log_dir=self.log_dir,
-<<<<<<< HEAD
-                                        histogram_freq=0, write_graph=True, write_images=False),
-=======
                                         histogram_freq=0, write_graph=True, write_images=True),
->>>>>>> jaeung
             keras.callbacks.ModelCheckpoint(self.checkpoint_path,
                                             verbose=0, save_weights_only=True),
         ]
@@ -2371,11 +2363,7 @@ class MaskRCNN():
         else:
             workers = multiprocessing.cpu_count()
 
-<<<<<<< HEAD
-        self.keras_model.fit_generator(
-=======
         history = self.keras_model.fit_generator(
->>>>>>> jaeung
             train_generator,
             initial_epoch=self.epoch,
             epochs=epochs,
@@ -2388,10 +2376,7 @@ class MaskRCNN():
             use_multiprocessing=True,
         )
         self.epoch = max(self.epoch, epochs)
-<<<<<<< HEAD
-=======
         return history
->>>>>>> jaeung
 
     def mold_inputs(self, images):
         """Takes a list of images and modifies them to the format expected
@@ -2554,12 +2539,7 @@ class MaskRCNN():
                 "masks": final_masks,
             })
         return results
-<<<<<<< HEAD
-
-=======
         
-        
->>>>>>> jaeung
     def detect_molded(self, molded_images, image_metas, verbose=0):
         """Runs the detection pipeline, but expect inputs that are
         molded already. Used mostly for debugging and inspecting

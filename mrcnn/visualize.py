@@ -19,10 +19,7 @@ import matplotlib.pyplot as plt
 from matplotlib import patches,  lines
 from matplotlib.patches import Polygon
 import IPython.display
-<<<<<<< HEAD
-=======
 from PIL import Image, ImageDraw, ImageFont
->>>>>>> jaeung
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("../")
@@ -137,11 +134,7 @@ def display_instances(image, boxes, masks, class_ids, class_names,
             p = patches.Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=2,
                                 alpha=0.7, linestyle="dashed",
                                 edgecolor=color, facecolor='none')
-<<<<<<< HEAD
-            ax.add_patch(p)
-=======
             ax.add_patch(p) 
->>>>>>> jaeung
 
         # Label
         if not captions:
@@ -508,8 +501,7 @@ def display_weight_stats(model):
                 "{:+9.4f}".format(w.std()),
             ])
     display_table(table)
-<<<<<<< HEAD
-=======
+
 
 def save_image(image, image_name, boxes, masks, class_ids, scores, class_names, filter_classs_names=None, scores_thresh=0.1, save_dir=None, mode=0):
     """
@@ -602,4 +594,3 @@ def save_image(image, image_name, boxes, masks, class_ids, scores, class_names, 
         draw.text((x1, y1), "%s %f" % (label, score), (255, 255, 255), font)
 
     masked_image.save(os.path.join(save_dir, '%s.jpg' % (image_name)))
->>>>>>> jaeung
