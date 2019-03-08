@@ -5,7 +5,14 @@ logs/
 results/
 temp/
 test/
+<<<<<<< HEAD
 csci_e89_project/images
+=======
+fish_project/images
+fish_project/one_class_instance_seg.ipynb
+fish_project/result_masks
+fish_project/result_masks_1.dms
+>>>>>>> jaeung
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -58,5 +65,10 @@ pip-delete-this-directory.txt
 venv/
 ENV/
 
+<<<<<<< HEAD
 
 
+=======
+.DS_Store
+.DS_Store
+>>>>>>> jaeung
