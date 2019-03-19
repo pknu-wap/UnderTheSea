@@ -13,6 +13,16 @@ Fish detection is concerned with identifying a single object in an image. Classi
 
 ![Instance Segmentation](assets/detection_definition.jpg)
 
+
+
+## Environment
+
+
+Python 3.6.8 through anaconda3 on MacOS 10.14.3
+Tensorflow 1.13.1
+Juypter notebook
+
+
 ## Image Annotation
 
 The VGG Image Annotator (VIA) was used to annotate the images. VIA was selected because it was simple to install on any OS (single html page),  simple to use, and responsive. Other options include  COCO Annotation UI (https://github.com/tylin/coco-ui.git) and LabelMe  (
@@ -102,7 +112,7 @@ Sample results are:
 
 
 ## Fish Classification Instance Segmentation
-Fish classification used photos of only 5 species. This is because, in QUT Fish dataset, there are few photos per spieces. To classify more species, you need much more photos of each species. det.py is used for configuration creating the datasets.
+We used photos of only 5 species for fish classification. This is because, in QUT Fish dataset, there are few photos per spieces. To classify more species, you need much more photos of each species. det.py is used for configuration creating the datasets.
 
 * Fish classification is still working. We are gathering more fish photos now. :p
 
@@ -121,3 +131,5 @@ Sample results are:
 4.	Lin et al, "Feature Pyramid Network (FPN), https://arxiv.org/pdf/1612.03144.pdf 
 5.	Stanford CS231n Lecture 11 - Detection and Segmentation, http://cs231n.stanford.edu/slides/2017/cs231n_2017_lecture11.pdf
 6.  François Chollet, Deep Learning With Python, 2017, Manning Publications Company 
+7.  모두를 위한 딥러닝 강좌 시즌 1, 김성훈 교수님, https://www.youtube.com/playlist?list=PLlMkM4tgfjnLSOjrEJN31gZATbcj_MpUm
+8.  인공지능을 위한 수학, 이시카와 아키히코, 프리렉, https://freelec.co.kr/book/인공지능을-위한-수학/
