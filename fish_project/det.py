@@ -157,7 +157,7 @@ class DetDataset(utils.Dataset):
 
         # Find the unique classes and track their count
         for a in annotations:
-            for id, region in a['regions'].items():
+            for _, region in a['regions'].items():
                 object_name = region['region_attributes']['object_name']
                 self.actual_class_names[object_name] += 1
 
@@ -587,9 +587,6 @@ def divide_dataset(dataset_dir, train_pct):
 if __name__ == "__main__" :
     config = DetConfig('Fish', ['Fish'])
     dataset_train, dataset_val = create_datasets('./images/fish/train', config)
-
-    # config = DetConfig('sign', ['sign', 'yield_sign', 'stop_sign', 'oneway_sign', 'donotenter_sign', 'wrongway_sign'])
-    # dataset_train, dataset_val = create_datasets('./images/signs/train', config)
 
     dataset_train.prepare()
     dataset_val.prepare()
