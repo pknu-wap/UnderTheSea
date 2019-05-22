@@ -9,6 +9,7 @@ fish_project/images
 fish_project/one_class_instance_seg.ipynb
 fish_project/result_masks
 fish_project/result_masks_1.dms
+fish_image/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
